@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import authenticate from './api/login';
+
 const LoginPage = () => {
 
   const [username, setUsername] = useState('');
@@ -21,12 +23,19 @@ const LoginPage = () => {
 
         console.log(response)  
       
-        if ( response == true){
-            navigate("/welcome");
+        if ( response.success){
+          const {user_id, user_name} = response;
+
+            navigate(`/welcome`,{
+              state : {
+                user_id: user_id,
+                user_name: user_name
+              }
+            });
         }
 
     }catch(error){
-
+      console.error(error);
     }
 };
 
@@ -66,42 +75,5 @@ const handleBackButton = ()=>{
 
 };
 
-
-const authenticate = async(username, password,event)=>{
-    try{
-        // event.preventDefault();
-        const url = `http://localhost:8000/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
-
-        const requestOptions = {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-          };
-
-        const response = await fetch( url ,requestOptions);
-
-        
-        console.log(response.body);
-        console.log(response.status)
-
-        if(response.status !== 200){
-            throw new Error(`Request failed with status ${response.status}`);
-          }
-
-        const response_data = await response.json();
-  
-        console.log(response_data)
-        if(response_data.success == false){
-            return false;
-        }else{
-            return true;
-        }
-
-      }catch(error){
-
-      }
-
-};
 
 export default LoginPage;
