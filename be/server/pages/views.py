@@ -6,6 +6,7 @@ from django.http import HttpResponse,JsonResponse
 import random
 import openai
 import os
+import datetime
 from django.db import connection
 # Create your views here.
 
@@ -19,12 +20,14 @@ def check_credentials(username, password):
     with connection.cursor() as cursor:
         query = "SELECT * FROM registration WHERE username = %s AND password = %s"
         cursor.execute(query, (username, password))
-        res = cursor.fetchall()
-        if len(res) > 0:
-            return True
-    return False
-
-
+        res = cursor.fetchone()
+       
+        print(res)
+        if res:
+            user_id, user_name, email, password, created_at, updated_at = res
+            return True, user_id, user_name
+            
+    return False, None, None
 
 
 preference = None
@@ -81,15 +84,27 @@ def login_view(request):
 
 
     # print(f"received username: {param1}, password:{param2}")
-    if check_credentials(username,password):
-        response = JsonResponse({'success': True})
-        response['Access-Control-Allow-Origin'] = 'http://localhost:3000'
-        return response
+    success, user_id, user_name = check_credentials(username,password)
+
+    if success:
+
+        response_data ={
+            'success' :True,
+            'user_id' : user_id,
+            'user_name' : user_name
+        }
+      
     else:
-        response = JsonResponse({'success': False})
-        response['Access-Control-Allow-Origin'] = 'http://localhost:3000'
-        return response
+        response_data = {
+            'success': False
+        }
+
+    response = JsonResponse(response_data)
+    response['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+    return response
     
+
+
 
 # handler for user registration
 def register_view(request):
@@ -104,5 +119,54 @@ def register_view(request):
         cursor.execute("INSERT INTO registration (username, password, email) VALUES (%s, %s, %s)", (username, password,email))
 
     response = JsonResponse({'success': True})
-    
     return response
+
+
+# handler for user data collected from the use
+def collected_data_view(request):
+    print("debugg!!!")
+    yesCount = request.GET.get('yesCount')
+    noCount = request.GET.get('noCount')
+    timeSpent = request.GET.get('timeSpent')
+    userId = request.GET.get('userId')
+    date = datetime.date.today()
+    dateStr =date.strftime('%Y-%m-%d')
+    print("register_view:received yesCount: " +  yesCount + "  , noCount: " + noCount + "  ,timeSpent: " + timeSpent + " ,userId: " + userId + " , date is : " + dateStr)
+
+    with connection.cursor() as cursor:
+
+        #Check if there is an existing row for the user on this date
+        cursor.execute("SELECT * FROM distractionAnswer WHERE user_id = %s AND date = %s", (userId, date))
+
+        if cursor.fetchone():
+            cursor.execute("UPDATE distractionAnswer SET yes_count = yes_count + %s, no_count = no_count + %s, time_spent = time_spent + %s WHERE user_id = %s AND date = %s", (yesCount, noCount, timeSpent, userId, date))
+        else:
+            cursor.execute("INSERT INTO distractionAnswer (user_id, date, yes_count, no_count, time_spent) VALUES (%s, %s, %s, %s, %s)", (userId, date, yesCount, noCount,timeSpent))
+
+    response = JsonResponse({'success': True})
+    return response
+
+
+def retrieve_data_view(request):
+
+    userId = request.GET.get('userId')
+
+    with connection.cursor() as cursor:
+
+        #Check if there is an existing row for the user on this date
+        cursor.execute("SELECT date, yes_count FROM distractionAnswer WHERE user_id = %s ORDER BY date ASC", (userId,))
+
+        data = cursor.fetchall()
+
+        dates = [row[0] for row in data]
+        yes_counts = [row[1] for row in data]
+
+        for date, yes_count in zip(dates, yes_counts):
+            print(f"Date: {date}, Yes Count: {yes_count}")
+
+        res_data = {
+            'dates' : dates,
+            'yesCounts': yes_counts
+        }
+
+        return JsonResponse(res_data)

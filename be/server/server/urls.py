@@ -16,7 +16,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-
 from pages import views
 
 # from .views import home_page_view
@@ -27,5 +26,7 @@ urlpatterns = [
     path("request/", views.generate_response_view, name="generate_A_response"),
     path("setting/param/", views.client_setting_view, name="client_setting_view"),
     path("login/", views.login_view, name="login_view"),
-     path("register/", views.register_view, name="register_view")
+    path("register/", views.register_view, name="register_view"),
+    path("result/", views.collected_data_view, name="collected_data_view"),
+    path("retrieve/", views.retrieve_data_view, name="retrieve_data_view")
 ]
