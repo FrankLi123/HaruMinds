@@ -24,9 +24,15 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("hello/", views.home_page_view, name="home"),
     path("request/", views.generate_response_view, name="generate_A_response"),
+    path("request/ai", views.generate_ai_response_view, name="generate_ai_response_view"),
     path("setting/param/", views.client_setting_view, name="client_setting_view"),
     path("login/", views.login_view, name="login_view"),
     path("register/", views.register_view, name="register_view"),
     path("result/", views.collected_data_view, name="collected_data_view"),
-    path("retrieve/", views.retrieve_data_view, name="retrieve_data_view")
+    path("retrieve/", views.retrieve_data_view, name="retrieve_data_view"),
+    path("generate/", views.store_generated_texts_view, name="store_generated_texts_view"),
+    path("setting/initialSetting/", views.user_initial_setting_view, name="user_initial_setting_view"),
+    path("retrieve/reasons/", views.retreive_reasons_view, name="retreive_reasons_view"),
+    path("retrieve/user_data/", views.retreive_user_data_view, name="retreive_user_data_view")
+    
 ]
