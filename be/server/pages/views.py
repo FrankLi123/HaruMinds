@@ -146,22 +146,29 @@ def register_view(request):
 
 # handler for user data collected from the use
 def collected_data_view(request):
-    yesCount = request.GET.get('yesCount')
-    noCount = request.GET.get('noCount')
+    yesDistractCount = request.GET.get('distractYesCount')
+    noDistractCount = request.GET.get('distractNoCount')
+    
+    yesTipCount = request.GET.get('tipYesCount')
+    noTipCount = request.GET.get('tipNoCount')
+
     timeSpent = request.GET.get('timeSpent')
+
     userId = request.GET.get('userId')
+    
     date = datetime.date.today()
+    
     dateStr =date.strftime('%Y-%m-%d')
-    print("register_view:received yesCount: " +  yesCount + "  , noCount: " + noCount + "  ,timeSpent: " + timeSpent + " ,userId: " + userId + " , date is : " + dateStr)
+    
+    print("register_view:received yesDistractCount: " +  yesDistractCount + "  , noDistractCount: " + noDistractCount +"  , yesTipCount: " + yesTipCount +"  , noTipCount: " + noTipCount + "  ,timeSpent: " + timeSpent + " ,userId: " + userId + " , date is : " + dateStr)
 
     with connection.cursor() as cursor:
         #Check if there is an existing row for the user on this date
         cursor.execute("SELECT * FROM distractionAnswer WHERE user_id = %s AND date = %s", (userId, date))
-
         if cursor.fetchone():
-            cursor.execute("UPDATE distractionAnswer SET yes_count = yes_count + %s, no_count = no_count + %s, time_spent = time_spent + %s WHERE user_id = %s AND date = %s", (yesCount, noCount, timeSpent, userId, date))
+            cursor.execute("UPDATE distractionAnswer SET distract_yes_count = distract_yes_count + %s, distract_no_count = distract_no_count + %s, tip_yes_count = tip_yes_count + %s, tip_no_count = tip_no_count + %s, time_spent = time_spent + %s WHERE user_id = %s AND date = %s", (yesDistractCount, noDistractCount, yesTipCount, noTipCount, timeSpent, userId, date))
         else:
-            cursor.execute("INSERT INTO distractionAnswer (user_id, date, yes_count, no_count, time_spent) VALUES (%s, %s, %s, %s, %s)", (userId, date, yesCount, noCount,timeSpent))
+            cursor.execute("INSERT INTO distractionAnswer (user_id, date, distract_yes_count, distract_no_count,tip_yes_count, tip_no_count, time_spent) VALUES (%s, %s, %s, %s, %s, %s, %s)", (userId, date, yesDistractCount, noDistractCount, yesTipCount, noTipCount,timeSpent))
 
     response = JsonResponse({'success': True})
     return response
@@ -224,7 +231,7 @@ def retrieve_data_view(request):
     with connection.cursor() as cursor:
 
         #Check if there is an existing row for the user on this date
-        cursor.execute("SELECT date, yes_count FROM distractionAnswer WHERE user_id = %s ORDER BY date ASC", (userId,))
+        cursor.execute("SELECT date, distract_yes_count FROM distractionAnswer WHERE user_id = %s ORDER BY date ASC", (userId,))
 
         data = cursor.fetchall()
 
