@@ -9,13 +9,13 @@ import os
 import datetime
 from django.db import connection
 # Create your views here.
-
-
+import json
+from pages.utils.openai_api import generate_long_term_plan_view
+from pages.utils.openai_api import generate_daily_plan_view
 user_data = [
     {'username': 'frank', 'password': '123'},
     {'username': 'jack', 'password': '456'},
 ]
-
 def check_credentials(username, password):
     with connection.cursor() as cursor:
         query = "SELECT * FROM registration WHERE username = %s AND password = %s"
@@ -174,29 +174,86 @@ def collected_data_view(request):
     return response
 
 
+
+def remove_quotes_and_backslashes(input_string):
+    # Remove leading and trailing double quotes
+    result_string = input_string.strip('"')
+    # Remove backslashes
+    result_string = result_string.replace('\\', '')
+    return result_string
+
+
+
+def user_daily_plan_view(request):
+    userId = request.GET.get('userId')
+
+    with connection.cursor() as cursor:
+            # Check if there is an existing row for the user
+            cursor.execute("SELECT long_term_plan FROM user WHERE id = %s", (userId,))
+            row = cursor.fetchone()
+            if row:
+                long_term_plan = row[0].split(',') if row[0] else []
+    
+    daily_plan = generate_daily_plan_view(long_term_plan)
+    print("message will be", daily_plan)
+    return JsonResponse({'message': daily_plan})
+
+
+
 def user_initial_setting_view(request):
     userId = request.GET.get('userId')
-    reasons = request.GET.get('reasons')
-    tips = request.GET.get('tips')
-    personality = request.GET.get('personality')
+    old_answer_string =  request.GET.get('answers')
+ 
+    # answer_string = '{"selectedReasons":[],"confidence":"2"}'
+    answer_string = remove_quotes_and_backslashes(old_answer_string)
 
+    print("userId", userId)
+    print("answer_string: "+ answer_string)
+    answers_dict = json.loads(answer_string)
+    print(type(answers_dict))
+
+
+    # Print debugging information
+    print("Decoded answers:", answers_dict)
+    long_term_plan = generate_long_term_plan_view(answers_dict)
+    # long_term_plan ="12312412"
+    print("The generated long-term plan is:", long_term_plan)
     tableName = "user"
+
     with connection.cursor() as cursor:
         # Fetch the user instance from the database using the user_id
         cursor.execute("SELECT * FROM user WHERE id = %s", [userId])
         user_data = cursor.fetchone()
         if user_data:
             # Update the existing user's data
-            update_query = f"UPDATE {tableName} SET reasons = %s, tips = %s, personality = %s WHERE id = %s"
-            cursor.execute(update_query, [reasons, tips, personality, userId])
+            update_query = f"UPDATE {tableName} SET answer_string = %s, long_term_plan = %s WHERE id = %s"
+            cursor.execute(update_query, [answer_string, long_term_plan, userId])
             # Return a JSON response indicating success
         else:
             # Insert a new user with the provided data
-            insert_query = f"INSERT INTO {tableName} (id, reasons, tips, personality) VALUES (%s, %s, %s, %s)"
-            cursor.execute(insert_query, [userId, reasons, tips, personality])
+            insert_query = f"INSERT INTO {tableName} (id, long_term_plan, answer_string) VALUES (%s, %s, %s)"
+            cursor.execute(insert_query, [userId, long_term_plan, answer_string])
             
-    return JsonResponse({'message': 'User updated successfully'})
+    print("message will be", long_term_plan)
+    return JsonResponse({'message': long_term_plan})
             
+
+
+def retreive_long_term_plan_view(request):
+
+    userId = request.GET.get('userId')
+    print("retreive_long_term_plan_view, userId is", userId)
+    with connection.cursor() as cursor:
+            # Check if there is an existing row for the user
+            cursor.execute("SELECT long_term_plan FROM user WHERE id = %s", (userId,))
+            row = cursor.fetchone()
+            if row:
+                long_term_plan = row[0] if row[0] else []
+    
+    print("message plan will be", long_term_plan)
+
+    return JsonResponse({'plan': long_term_plan})
+
 
 
 def retreive_reasons_view(request):
@@ -254,15 +311,15 @@ def retreive_user_data_view(request):
 
     with connection.cursor() as cursor:
         # Check if there is an existing row for the user
-        cursor.execute("SELECT reasons, tips FROM user WHERE id = %s", (user_id,))
-        row = cursor.fetchone()
+        # cursor.execute("SELECT reasons, tips FROM user WHERE id = %s", (user_id,))
+        # row = cursor.fetchone()
 
-        if row:
-            reasons = row[0].split(',') if row[0] else []
-            tips = row[1].split(',') if row[1] else []
-            res_data = {'reasons': reasons, 'tips': tips}
-        else:
-            res_data = {'reasons': [], 'tips': []}
+        # if row:
+        #     reasons = row[0].split(',') if row[0] else []
+        #     tips = row[1].split(',') if row[1] else []
+        #     res_data = {'reasons': reasons, 'tips': tips}
+        # else:
+        res_data = {'reasons': [], 'tips': []}
 
     return JsonResponse(res_data)
 
