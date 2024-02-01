@@ -3,19 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import pet from './img/idle_to_sleep.gif';
 import FormSetting from './FormSettings';
 import DistractedQuestion from './DistractedQuestion'; // Import the DistractedQuestion component
-import countDailyAnswer from './api/handler';
-import QuoteDisplay
- from './Components/QuoteDisplay';
+
+import apiHandler from './api/handler';
+
+import QuoteDisplay from './Components/QuoteDisplay';
+
+
+const {countDailyAnswer, getRandomResponse} = apiHandler;
+
+
 function MainPage() {
   const navigate = useNavigate();
   const [showStart, setShowStart] = useState(false);
   const [showDistractedQuestion, setShowDistractedQuestion] = useState(false);
   const [counter, setCounter] = useState(10);
+  const [fixedCounter, setFixedCounter] = useState(10);
   const [countdownStarted, setCountdownStarted] = useState(false);
   const [yesCount, setYesCount] = useState(0);
   const [noCount, setNoCount] = useState(0);
-
   const [time, setTime] = useState(null);
+  const [quote, setQuote] = useState('');
 
   const handleBackButton = () => {
     navigate('/welcome');
@@ -23,14 +30,13 @@ function MainPage() {
 
   const showStartText = () => {
     setCountdownStarted(true);
-
     const timeNow = new Date();
     setTime(timeNow);
   };
 
   const closeDistractedQuestion = () => {
     setShowDistractedQuestion(false);
-    setCounter(5);
+    setCounter(fixedCounter*60);
     setCountdownStarted(true);
 
   };
@@ -52,7 +58,7 @@ function MainPage() {
     // make the api call 
     try{
       const res = await countDailyAnswer(userId, yesCount, noCount, timeSpentInSecond);
-    
+
       console.log(res.success)
 
         if( res.success){
@@ -62,32 +68,63 @@ function MainPage() {
         }
       
     }catch(error){
-
     }
+  }
 
-    // window.close()
+
+  const updateMainState = (newState)=>{
+     setCounter(newState);
+     setFixedCounter(newState);
+  };
+
+  const showTextResponse = async()=>{
+   
+    const userId = sessionStorage.getItem('user_id');
+    
+    // make the api call 
+    try{
+      const res = await getRandomResponse();
+      
+      console.log("res.sentence is :", res);
+         
+        setQuote(res);
+
+        console.log('MainPage Quote:', quote);
+    
+    
+    }catch(error){
+    }
   }
 
 
   useEffect(() => {
-    let interval;
-  
+    let intervalCountDown;
     if (countdownStarted && counter > 0) {
-      interval = setInterval(() => {
+
+      intervalCountDown = setInterval(() => {
         setCounter(prevCounter => prevCounter - 1);
       }, 1000);
     } else if (counter === 0) {
       setShowDistractedQuestion(true);
-      clearInterval(interval);
+      clearInterval(intervalCountDown);
     }
-  
-    return () => clearInterval(interval);
+
+    showTextResponse();
+    const intervalTextResponse = setInterval(() => {
+      showTextResponse();
+    }, 10000);
+
+    return () => {
+      clearInterval(intervalCountDown);
+      clearInterval(intervalTextResponse);
+    };
+    
   }, [countdownStarted, counter]);
 
   return (
     <div>
       <h1> Hello, this is your main page! </h1>
-      <FormSetting />
+      <FormSetting updateMainPageState ={updateMainState}/>
       <img src={pet} alt="" />
       <button onClick={handleBackButton}>Back</button>
 
@@ -101,21 +138,24 @@ function MainPage() {
 
       {showDistractedQuestion &&
         <DistractedQuestion 
+        setMinutes={fixedCounter/60}
         onYesClick={incrementCountYes} 
         onNoClick={incrementCountNo }
         onClose={closeDistractedQuestion}
       />
       }
 
-
       <div>
         Counter: {counter} seconds
         Yes Count: {yesCount}
         No Count: {noCount}
-        <QuoteDisplay />
       </div>
 
       <button onClick={submitUserResult}> End for Today! </button>
+
+      <div>
+        <QuoteDisplay quote={quote} />
+      </div>
     </div>
   );
 }

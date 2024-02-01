@@ -7,6 +7,7 @@ function LandingPage() {
       <h1> Hello, wecome to Virtual Pet World!</h1>
       <Link to="/login"> Login</Link>
       <Link to="/register"> Register</Link>
+      
     </div>
   );
 }

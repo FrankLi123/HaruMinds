@@ -30,9 +30,10 @@ urlpatterns = [
     path("register/", views.register_view, name="register_view"),
     path("result/", views.collected_data_view, name="collected_data_view"),
     path("retrieve/", views.retrieve_data_view, name="retrieve_data_view"),
+    path("retrieve/daily_plan", views.user_daily_plan_view, name="  user_daily_plan_view"),
     path("generate/", views.store_generated_texts_view, name="store_generated_texts_view"),
     path("setting/initialSetting/", views.user_initial_setting_view, name="user_initial_setting_view"),
     path("retrieve/reasons/", views.retreive_reasons_view, name="retreive_reasons_view"),
-    path("retrieve/user_data/", views.retreive_user_data_view, name="retreive_user_data_view")
-    
+    path("retrieve/user_data/", views.retreive_user_data_view, name="retreive_user_data_view"),
+    path("retrieve/long_term_plan", views.retreive_long_term_plan_view, name="retreive_long_term_plan_view")
 ]

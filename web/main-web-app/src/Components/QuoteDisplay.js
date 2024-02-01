@@ -1,40 +1,35 @@
-// QuoteDisplay.js
 import React, { useState, useEffect } from 'react';
 
-const QuoteDisplay = () => {
-  const [quote, setQuote] = useState(null);
-
-  const quotes = [
-    "Quote 1",
-    "Quote 2",
-    "Quote 3",
-    // Add more quotes as needed
-  ];
+const QuoteDisplay = ({ quote }) => {
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const showRandomQuote = () => {
-      const randomIndex = Math.floor(Math.random() * quotes.length);
-      setQuote(quotes[randomIndex]);
+    console.log("Received quote in QuoteDisplay:", quote);
 
-      setTimeout(() => {
-        setQuote(null);
-      }, 10000);
-    };
+    // Display the quote for 10 seconds
+    setVisible(true);
 
-    const quoteInterval = setInterval(showRandomQuote, 10 * 60 * 1000);
+    // Clear the display after 10 seconds
+    const timeoutId = setTimeout(() => {
+      setVisible(false);
+    }, 1000000);
 
-    return () => clearInterval(quoteInterval);
-  }, []);
+    return () => clearTimeout(timeoutId); // Clear the timeout on component unmount or quote change
+  }, [quote]);
 
   return (
-    <div>
-      {quote && (
-        <div className="quote-container">
-          <div className="quote-text">{quote}</div>
+      <div>
+      {visible && (
+        <div>
+          <br/>
+          <br/>
+          <br/>
+          Here is the friendly Quote from your pet:<br/>{quote}
         </div>
-      )}
-    </div>
+      )} 
+      </div>
+
   );
-}
+};
 
 export default QuoteDisplay;

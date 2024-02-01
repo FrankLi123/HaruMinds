@@ -23,7 +23,6 @@ const authenticate = async(username, password, event)=>{
         console.log(response_data)
 
         if(response_data.success == false){
-            
             return {
                 success: false
             };

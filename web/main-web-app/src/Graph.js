@@ -20,7 +20,6 @@ function GraphPage() {
         )
     }
 
-
   return (
     <div>
       <h1> Trend Line Chart</h1>

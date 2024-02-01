@@ -35,11 +35,8 @@ const handleBackButton = ()=>{
     navigate('/');
 
 }
-
   return (
-
     <div>
-
     {success ? (
         <div>
             <h2> Successfully Registered.</h2>
