@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
 
-const FormSetting = () => {
+const FormSetting = ({updateMainPageState}) => {
   const [showForm, setShowForm] = useState(false);
   const [recordTime, setRecordTime] = useState('');
   const [interactionPreference, setInteractionPreference] = useState('');
   const [advicePreference, setAdvicePreference] = useState('');
   const [showDetails, setShowDetails] = useState(false);
 
+
+
+  const handleFormSettingChange = (newValue) =>{
+
+    updateMainPageState(recordTime * 60);
+
+  }
   const handleSettingsClick = () => {
     setShowForm(true);
     setShowDetails(false);
@@ -16,11 +23,13 @@ const FormSetting = () => {
     e.preventDefault();
     setShowForm(false);
     setShowDetails(false);
+    handleFormSettingChange(recordTime);
   };
 
   const handleShowDetailsClick = () => {
     setShowDetails(!showDetails); // Toggle the value of showDetails
   };
+
 
   return (
     <div>

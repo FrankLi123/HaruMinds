@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const DistractedQuestion = ({ onYesClick, onNoClick, onClose }) => {
+const DistractedQuestion = ({ setMinutes,onYesClick, onNoClick, onClose }) => {
 
   const handleOptionClick = (option) => {
 
@@ -14,7 +14,7 @@ const DistractedQuestion = ({ onYesClick, onNoClick, onClose }) => {
 
   return (
     <div>
-      <h2>Were you distracted in the last xxx minutes?</h2>
+      <h2>Were you distracted in the last {setMinutes} minutes?</h2>
       <button onClick={() => handleOptionClick(true)}>Yes</button>
       <button onClick={() => handleOptionClick(false)}>No</button>
     </div>
