@@ -4,7 +4,7 @@ from django.http import HttpResponse,JsonResponse
 # from langchain.indexes import VectorstoreIndexCreator
 # from langchain.chat_models import ChatOpenAI
 import random
-import openai
+from openai import OpenAI
 import os
 import datetime
 from django.db import connection
@@ -73,14 +73,26 @@ def generate_ai_response_view(request):
         param1 = request.GET.get('text')
         print(f"received {param1}")
 
-        openai.api_key= os.getenv("OPENAI_API_KEY")
+        # openai.api_key= os.getenv("OPENAI_API_KEY")
 
-        prompt= f'(please respond to a guy who is suffering from mental issue as an therapist within 70 token please): Here is the text:{param1}'
+        prompt= [
+                {"role": "system", "content": "You are a professional psychological therapist that help patients."},
+                {"role": "user", "content": 
+        f'(please respond to a guy who is suffering from mental issue as an therapist within 70 token please): Here is the text:{param1}'
+         },
+        ]
         # prompt= '{param1}'
-        model = "text-davinci-003"
-        response = openai.Completion.create(engine=model, prompt=prompt, max_tokens =70)
-        generated_text =response.choices[0].text
+        # model = "text-davinci-003"
+        # response = openai.Completion.create(engine=model, prompt=prompt, max_tokens =70)
+        # generated_text =response.choices[0].text
 
+        client = OpenAI()
+        completion = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=prompt
+        )
+
+        generated_text = completion.choices[0].message.content
         print("answer is: " + generated_text)
         return JsonResponse({'sentence': generated_text})
         # return JsonResponse({'sentence': "hey what's up man!"})
@@ -188,25 +200,57 @@ def user_daily_plan_view(request):
     userId = request.GET.get('userId')
 
     with connection.cursor() as cursor:
-            # Check if there is an existing row for the user
-            cursor.execute("SELECT long_term_plan FROM user WHERE id = %s", (userId,))
-            row = cursor.fetchone()
-            if row:
-                long_term_plan = row[0].split(',') if row[0] else []
+        # Check if there is an existing row for the user
+        cursor.execute("SELECT long_term_plan, phase_number FROM user WHERE id = %s", (userId,))
+        row = cursor.fetchone()
+        if row:
+            long_term_plan = row[0].split(',') if row[0] else []
+            phase_number = row[1]
+            print(long_term_plan)
+            print(phase_number)
+        
+    # Assuming phase_number is an integer, you can check its value and extract practical tips accordingly
+    if phase_number == 0:
+        # Extract practical tips for phase 0
+        practical_tips = parse_tips_for_phase(long_term_plan, 1)
+
+    print("practical_tips is: ")
+    print(practical_tips)
+    # Add more conditions for other phase numbers as needed
+
+    # Now practical_tips contains the relevant practical tips for the selected phase
+    # daily_plan = "to be continued"
+    daily_plan = generate_daily_plan_view(practical_tips)
     
-    daily_plan = generate_daily_plan_view(long_term_plan)
     print("message will be", daily_plan)
+
     return JsonResponse({'message': daily_plan})
+
+
+
+def parse_tips_for_phase(long_term_plan, phase_number):
+    # Join the list of strings into one
+    long_term_plan_text = ' '.join(long_term_plan)
+    # Assuming practical tips are separated by '\n\nTips for Phase x:' in long_term_plan_text
+    tips_separator = f'\n\nTips for Phase {phase_number}:\n'
+    next_phase_separator = f'\n\nPhase {phase_number + 1}'
+
+    if tips_separator in long_term_plan_text:
+        _, tips_section = long_term_plan_text.split(tips_separator, 1)
+        tips = tips_section.split(next_phase_separator, 1)[0].strip()  # Stop at the next "Phase" heading
+        return tips
+    else:
+        return f"Tips not found for Phase {phase_number}."
+
 
 
 
 def user_initial_setting_view(request):
     userId = request.GET.get('userId')
     old_answer_string =  request.GET.get('answers')
- 
+
     # answer_string = '{"selectedReasons":[],"confidence":"2"}'
     answer_string = remove_quotes_and_backslashes(old_answer_string)
-
     print("userId", userId)
     print("answer_string: "+ answer_string)
     answers_dict = json.loads(answer_string)
@@ -226,13 +270,13 @@ def user_initial_setting_view(request):
         user_data = cursor.fetchone()
         if user_data:
             # Update the existing user's data
-            update_query = f"UPDATE {tableName} SET answer_string = %s, long_term_plan = %s WHERE id = %s"
-            cursor.execute(update_query, [answer_string, long_term_plan, userId])
+            update_query = f"UPDATE {tableName} SET answer_string = %s, long_term_plan = %s, phase_number = %s WHERE id = %s"
+            cursor.execute(update_query, [answer_string, long_term_plan, 0, userId])
             # Return a JSON response indicating success
         else:
             # Insert a new user with the provided data
-            insert_query = f"INSERT INTO {tableName} (id, long_term_plan, answer_string) VALUES (%s, %s, %s)"
-            cursor.execute(insert_query, [userId, long_term_plan, answer_string])
+            insert_query = f"INSERT INTO {tableName} (id, long_term_plan, phase_number, answer_string) VALUES (%s, %s, %s,  %s)"
+            cursor.execute(insert_query, [userId, long_term_plan, 0, answer_string])
             
     print("message will be", long_term_plan)
     return JsonResponse({'message': long_term_plan})
