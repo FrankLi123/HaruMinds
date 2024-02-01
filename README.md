@@ -166,14 +166,14 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <!-- CONTACT -->
 ## Contact
-Your Name - zongchen.li.cs@gmail.com
+zongchen.li.cs@gmail.com
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
-* []()
+* Special Thanks to material-kit-react team. [http://demos.creative-tim.com/material-kit-react/#/?ref=readme-mkr)]()
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
